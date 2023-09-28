@@ -1,3 +1,7 @@
-import torch
-print(torch.cuda.is_available())
-print(torch.cuda.get_device_name())
+import pandas as pd
+
+df=pd.DataFrame()
+
+df['test']=[2,3,4,5]
+
+print(df.head())
