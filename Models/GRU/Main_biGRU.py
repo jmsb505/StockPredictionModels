@@ -36,7 +36,7 @@ metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','te
 metrics_df=pd.DataFrame()
 metrics_df['Metrics']=metric_labels
 #save dataframe as csv
-metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_metrics.csv',index=False)
+metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_metrics.csv',index=False)
 metrics=[]
 df_dict={}
 for key in df['ticker_symbol'].unique():
@@ -112,7 +112,7 @@ for ticker_symbol in df_dict.keys():
     def build_model(hp):
         hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
         model=Sequential()
-        model.add(LSTM(hp_units,activation='relu',input_shape=(X.shape[1],X.shape[2]),return_sequences=False))
+        model.add(Bidirectional(GRU(hp_units,activation='relu',input_shape=(X.shape[1],X.shape[2]),return_sequences=False)))
         model.add(Dense(y.shape[1]))
         model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
 
@@ -123,8 +123,8 @@ for ticker_symbol in df_dict.keys():
     # %%
     tuner = kt.GridSearch(build_model,
                         objective='val_loss',
-                        directory='/home/j/usfq/tesis/StockPredictionModels/Models/LSTM/Tuning',
-                        project_name='lstm_tuning',
+                        directory='/home/j/usfq/tesis/StockPredictionModels/Models/GRU/Tuning',
+                        project_name='bi_gru_tuning',
                         )
 
     # %%
@@ -144,7 +144,7 @@ for ticker_symbol in df_dict.keys():
         return np.mean(np.square(y_pred - y_true))
 
     # %%
-    dir='/home/j/usfq/tesis/StockPredictionModels/Graphs/LSTM/'+ticker
+    dir='/home/j/usfq/tesis/StockPredictionModels/Graphs/biGRU/'+ticker
     tscv = TimeSeriesSplit(n_splits=10)
     t_mses=[]
     v_mses=[]
@@ -309,7 +309,7 @@ for ticker_symbol in df_dict.keys():
     metrics_df[ticker_symbol]=metrics
     metrics=[]
     #save dataframe as csv
-    metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_metrics.csv',index=False)
+    metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_metrics.csv',index=False)
     print(f'{ticker} done')
 
 
@@ -319,15 +319,14 @@ df_ps['MSE']=mse_t_p
 df_ps['MAE']=mae_t_p
 df_ps['SMAPE']=smape_t_p
 df_ps['Forecast Bias']=forecast_bias_t_p
-df_ps.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_hypothesis.csv',index=False)
+df_ps.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_hypothesis.csv',index=False)
 
 df_loss=pd.DataFrame()
 df_loss['Training Loss']=overall_mse_train
 df_loss['Training Std']=overall_std_train
 df_loss['Validation Loss']=overall_mse_val
 df_loss['Validation Std']=overall_std_val
-df_loss.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_loss.csv',index=False)
-
+df_loss.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_loss.csv',index=False)
 
 
  
