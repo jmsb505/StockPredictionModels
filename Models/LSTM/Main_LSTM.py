@@ -34,6 +34,9 @@ df
 #generate new dataframes for each ticker_symbol]
 metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','testing-SMAPE','validation-SMAPE','testing-Forecast Bias','validation-Forecast Bias']
 metrics_df=pd.DataFrame()
+std_metrics_df=pd.DataFrame()
+std_metrics_df['Metrics']=metric_labels
+std_metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_std_metrics.csv',index=False)
 metrics_df['Metrics']=metric_labels
 #save dataframe as csv
 metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_metrics.csv',index=False)
@@ -311,6 +314,18 @@ for ticker_symbol in df_dict.keys():
     #save dataframe as csv
     metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_metrics.csv',index=False)
     print(f'{ticker} done')
+
+    Tstd_mse=np.std(t_mses)
+    Tstd_mae=np.std(t_maes)
+    Tstd_smape=np.std(t_smapes)
+    Tstd_forecast_bias=np.std(t_forecast_biases)
+    Vstd_mse=np.std(v_mses)
+    Vstd_mae=np.std(v_maes)
+    Vstd_smape=np.std(v_smapes)
+    Vstd_forecast_bias=np.std(v_forecast_biases)
+    std_metrics=[Tstd_mse,Tstd_mae,Tstd_smape,Tstd_forecast_bias,Vstd_mse,Vstd_mae,Vstd_smape,Vstd_forecast_bias]
+    std_metrics_df[ticker_symbol]=std_metrics
+    std_metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/lstm_std_metrics.csv',index=False)
 
 
 #define dataframe for metrics
