@@ -17,11 +17,13 @@ import os
 import warnings
 from tcn import TCN
 
+
 # %% [markdown]
 # 
-
+arch='bigru'
+project_path='/home/j/usfq/tesis/StockPredictionModels - Copy'
 # %%
-df=pd.read_csv('/home/j/usfq/tesis/StockPredictionModels/Data/Complete.csv')
+df=pd.read_csv(project_path+'/Data/Complete.csv')
 df
 
 # %%
@@ -32,14 +34,14 @@ df
 
 # %%
 #generate new dataframes for each ticker_symbol]
-metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','testing-SMAPE','validation-SMAPE','testing-Forecast Bias','validation-Forecast Bias']
+metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','testing-mape','validation-mape','testing-RMSE','validation-RMSE', 'testing-MPE','validation-MPE']
 metrics_df=pd.DataFrame()
 metrics_df['Metrics']=metric_labels
 std_metrics_df=pd.DataFrame()
 std_metrics_df['Metrics']=metric_labels
 #save dataframe as csv
-metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_metrics.csv',index=False)
-std_metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_std_metrics.csv',index=False)
+metrics_df.to_csv(project_path+f'/Results/{arch}_metrics.csv',index=False)
+std_metrics_df.to_csv(project_path+f'/Results/{arch}_std_metrics.csv',index=False)
 metrics=[]
 df_dict={}
 for key in df['ticker_symbol'].unique():
@@ -49,19 +51,25 @@ for key in df['ticker_symbol'].unique():
     #df_dict[key]=df_dict[key].drop(columns=['Date'])
 mse_t_p=[]
 mae_t_p=[]
-smape_t_p=[]
-forecast_bias_t_p=[]
+mape_t_p=[]
+rmse_t_p=[]
+mpe_t_p=[]
 mse_v_p=[]
 mae_v_p=[]
-smape_v_p=[]
-forecast_bias_v_p=[]
+mape_v_p=[]
+rmse_v_p=[]
+mpe_v_p=[]
 
 overall_mse_train=[]
 overall_mse_val=[]
 overall_std_train=[]
 overall_std_val=[]
 
-for ticker_symbol in df_dict.keys():
+keys=df_dict.keys()
+#to list
+keys_list=list(keys)
+
+for ticker_symbol in keys_list:
 # %%
     ticker=ticker_symbol
     print(f'Working on {ticker}...')
@@ -111,7 +119,10 @@ for ticker_symbol in df_dict.keys():
     X, y = np.array(X), np.array(y)
 
     # %%
-
+    import math as m
+    def n_layers(ks):
+        n=m.ceil(m.log2((((n_past-1)*(2-1))/(ks-1))+1))
+        return n
     def build_model(hp):
         hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
         model=Sequential()
@@ -121,13 +132,15 @@ for ticker_symbol in df_dict.keys():
 
         return model
 
-    early_stop=EarlyStopping(monitor='val_loss',patience=20)
+    early_stop=EarlyStopping(monitor='val_loss',patience=10)
 
     # %%
+    #arch variables to all caps
+    archUp=arch[-3:].upper()
     tuner = kt.GridSearch(build_model,
                         objective='val_loss',
-                        directory='/home/j/usfq/tesis/StockPredictionModels/Models/GRU/Tuning',
-                        project_name='bi_gru_tuning',
+                        directory=project_path+f'/Models/{archUp}/Tuning',
+                        project_name=ticker+f'_{arch}_tuning',
                         )
 
     # %%
@@ -137,26 +150,32 @@ for ticker_symbol in df_dict.keys():
     best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
 
     # %%
-    def smape(y_true, y_pred):
-        return 100 * np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred)))
+    def mape(y_true, y_pred):
+        return 100 * np.mean(np.abs(y_pred - y_true) / (np.abs(y_true)))
     def mae(y_true, y_pred):
         return np.mean(np.abs(y_pred - y_true))
-    def forecast_bias(y_true, y_pred):
-        return 100 * (np.mean(y_pred) - np.mean(y_true)) / np.mean(y_true)
     def mse(y_true, y_pred):
         return np.mean(np.square(y_pred - y_true))
+    def rmse(y_true, y_pred):
+        return np.sqrt(mse(y_true,y_pred))
+    def mpe(y_true, y_pred):
+        return np.mean((y_pred - y_true) / y_true) * 100
+    
 
     # %%
-    dir='/home/j/usfq/tesis/StockPredictionModels/Graphs/biGRU/'+ticker
+    early_stop=EarlyStopping(monitor='val_loss',patience=20)
+    dir=project_path+f'/Graphs/bi{archUp}/'+ticker
     tscv = TimeSeriesSplit(n_splits=10)
     t_mses=[]
     v_mses=[]
     t_maes=[]
     v_maes=[]
-    t_smapes=[]
-    v_smapes=[]
-    t_forecast_biases=[]
-    v_forecast_biases=[]
+    t_mapes=[]
+    v_mapes=[]
+    t_rmses=[]
+    v_rmses=[]
+    t_mpes=[]
+    v_mpes=[]
     counter_fold=1
     val_losses=[]
     train_losses=[]
@@ -219,28 +238,35 @@ for ticker_symbol in df_dict.keys():
         v_mae=mae(val_pred,y_val)
         v_maes.append(v_mae)
  
-        t_smape=smape(pred,y_test)
-        t_smapes.append(t_smape)
+        t_mape=mape(pred,y_test)
+        t_mapes.append(t_mape)
         
-        v_smape=smape(val_pred,y_val)
-        v_smapes.append(v_smape)
+        v_mape=mape(val_pred,y_val)
+        v_mapes.append(v_mape)
         
 
-        t_forecast_bias=forecast_bias(pred,y_test)
-        t_forecast_biases.append(t_forecast_bias)
+        t_rmse=rmse(pred,y_test)
+        t_rmses.append(t_rmse)
 
-        v_forecast_bias=forecast_bias(val_pred,y_val)
-        v_forecast_biases.append(v_forecast_bias)
+        v_rmse=rmse(val_pred,y_val)
+        v_rmses.append(v_rmse)
 
+        t_mpe=mpe(pred,y_test)
+        t_mpes.append(t_mpe)
+
+        v_mpe=mpe(val_pred,y_val)
+        v_mpes.append(v_mpe)
 
         mse_t_p.append(t_mse)
         mse_v_p.append(v_mse)
         mae_t_p.append(t_mae)
         mae_v_p.append(v_mae)
-        smape_t_p.append(t_smape)
-        smape_v_p.append(v_smape)
-        forecast_bias_t_p.append(t_forecast_bias)
-        forecast_bias_v_p.append(v_forecast_bias)
+        mape_t_p.append(t_mape)
+        mape_v_p.append(v_mape)
+        rmse_t_p.append(t_rmse)
+        rmse_v_p.append(v_rmse)
+        mpe_t_p.append(t_mpe)
+        mpe_v_p.append(v_mpe)
 
 
         real=np.concatenate((y_val,y_test))
@@ -301,31 +327,37 @@ for ticker_symbol in df_dict.keys():
     metrics.append(Taverage_mae)
     Vaverage_mae=np.mean(v_maes)
     metrics.append(Vaverage_mae)
-    Taverage_smape=np.mean(t_smapes)
-    metrics.append(Taverage_smape)
-    Vaverage_smape=np.mean(v_smapes)
-    metrics.append(Vaverage_smape)
-    Taverage_forecast_bias=np.mean(t_forecast_biases)
-    metrics.append(Taverage_forecast_bias)
-    Vaverage_forecast_bias=np.mean(v_forecast_biases)
-    metrics.append(Vaverage_forecast_bias)
+    Taverage_mape=np.mean(t_mapes)
+    metrics.append(Taverage_mape)
+    Vaverage_mape=np.mean(v_mapes)
+    metrics.append(Vaverage_mape)
+    Taverage_rmse=np.mean(t_rmses)
+    metrics.append(Taverage_rmse)
+    Vaverage_rmse=np.mean(v_rmses)
+    metrics.append(Vaverage_rmse)
+    Taverage_mpe=np.mean(t_mpes)
+    metrics.append(Taverage_mpe)
+    Vaverage_mpe=np.mean(v_mpes)
+    metrics.append(Vaverage_mpe)
     metrics_df[ticker_symbol]=metrics
     metrics=[]
     #save dataframe as csv
-    metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_metrics.csv',index=False)
+    metrics_df.to_csv(project_path+f'/Results/{arch}_metrics.csv',index=False)
     print(f'{ticker} done')
 
     Tstd_mse=np.std(t_mses)
     Tstd_mae=np.std(t_maes)
-    Tstd_smape=np.std(t_smapes)
-    Tstd_forecast_bias=np.std(t_forecast_biases)
+    Tstd_mape=np.std(t_mapes)
+    Tstd_rmse=np.std(t_rmses)
     Vstd_mse=np.std(v_mses)
     Vstd_mae=np.std(v_maes)
-    Vstd_smape=np.std(v_smapes)
-    Vstd_forecast_bias=np.std(v_forecast_biases)
-    std_metrics=[Tstd_mse,Tstd_mae,Tstd_smape,Tstd_forecast_bias,Vstd_mse,Vstd_mae,Vstd_smape,Vstd_forecast_bias]
+    Vstd_mape=np.std(v_mapes)
+    Vstd_rmse=np.std(v_rmses)
+    Tstd_mpe=np.std(t_mpes)
+    Vstd_mpe=np.std(v_mpes)
+    std_metrics=[Tstd_mse,Tstd_mae,Tstd_mape,Tstd_rmse,Vstd_mse,Vstd_mae,Vstd_mape,Vstd_rmse,Tstd_mpe,Vstd_mpe]
     std_metrics_df[ticker_symbol]=std_metrics
-    std_metrics_df.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_std_metrics.csv',index=False)
+    std_metrics_df.to_csv(project_path+f'/Results/{arch}_std_metrics.csv',index=False)
 
 
 
@@ -333,18 +365,18 @@ for ticker_symbol in df_dict.keys():
 df_ps=pd.DataFrame()
 df_ps['MSE']=mse_t_p
 df_ps['MAE']=mae_t_p
-df_ps['SMAPE']=smape_t_p
-df_ps['Forecast Bias']=forecast_bias_t_p
-df_ps.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_hypothesis.csv',index=False)
+df_ps['MAPE']=mape_t_p
+df_ps['RMSE']=rmse_t_p
+df_ps['MPE']=mpe_t_p
+df_ps.to_csv(project_path+f'/Results/{arch}_hypothesis.csv',index=False)
 
 df_loss=pd.DataFrame()
 df_loss['Training Loss']=overall_mse_train
 df_loss['Training Std']=overall_std_train
 df_loss['Validation Loss']=overall_mse_val
 df_loss['Validation Std']=overall_std_val
-df_loss.to_csv('/home/j/usfq/tesis/StockPredictionModels/Results/bigru_loss.csv',index=False)
+df_loss.to_csv(project_path+f'/Results/{arch}_loss.csv',index=False)
 
 
- 
 
 
