@@ -6,3 +6,4 @@
 /home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Models/GRU/Tuning/** filter=lfs diff=lfs merge=lfs -text
 /home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Models/LSTM/Tuning/** filter=lfs diff=lfs merge=lfs -text
 /home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Models/TCN/Tuning/** filter=lfs diff=lfs merge=lfs -text
+.csv filter=lfs diff=lfs merge=lfs -text
