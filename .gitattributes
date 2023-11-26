@@ -1,3 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 /home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Data/** filter=lfs diff=lfs merge=lfs -text
+/home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Graphs/** filter=lfs diff=lfs merge=lfs -text
+/home/j/usfq/Proyecto[[:space:]]Integrador/StockPredictionModels/Results/metrics/** filter=lfs diff=lfs merge=lfs -text
