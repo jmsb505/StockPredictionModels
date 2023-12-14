@@ -16,7 +16,8 @@ import os
 import warnings
 from tcn import TCN
 import math as m
-project_path='/home/j/usfq/tesis/StockPredictionModels - Copy'
+from tensorflow.keras import layers
+project_path='/home/j/usfq/Proyecto-Integrador/StockPredictionModels'
 # %%
 df=pd.read_csv(project_path+'/Data/Complete.csv')
 df
@@ -159,14 +160,47 @@ def build_tcn(hp):
     model.add(Dense(1))
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
     return model
+def transformer_encoder(inputs, head_size, num_heads,
+                        dropout=0, attention_axes=None):
+        x = layers.MultiHeadAttention(
+            key_dim=head_size, num_heads=num_heads, dropout=dropout,
+            attention_axes=attention_axes
+            )(inputs, inputs)
+        x = layers.Dropout(dropout)(x)
+        res = x + inputs
+        x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=3,padding='causal')(res)
+        return x + res
+def build_transformer(hp):
+    hp_head=hp.Int('head_size',min_value=16,max_value=128,step=16)
+    hp_num_heads=hp.Int('num_heads',min_value=2,max_value=6,step=2)
+    num_trans_blocks=1
+    hp_mlp_units=hp.Int('mlp_unit',min_value=16,max_value=128,step=16)
+    dropout=0.2
+    mlp_dropout=0.2
+
+    n_timesteps, n_features, n_outputs = 7, 17, 1 
+    inputs = tf.keras.Input(shape=(n_timesteps, n_features))
+    x = inputs 
+    for _ in range(num_trans_blocks):
+        x = transformer_encoder(x, hp_head, hp_num_heads, dropout)
+    
+    x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)
+    for dim in [hp_mlp_units]:
+        x = layers.Dense(dim, activation="relu")(x)
+        x = layers.Dropout(mlp_dropout)(x)
+
+    outputs = layers.Dense(n_outputs, activation='relu')(x)
+    model=tf.keras.Model(inputs, outputs)
+    model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
+    return model
 
 df_params=pd.DataFrame()
-archs=['LSTM','BiLSTM','GRU','BiGRU','TCN','BiTCN']
-builds=[build_lstm,build_bilstm,build_gru,build_bigru,build_tcn,build_bitcn]
+archs=['LSTM','BiLSTM','GRU','BiGRU','TCN','BiTCN','TRANSFORMER']
+builds=[build_lstm,build_bilstm,build_gru,build_bigru,build_tcn,build_bitcn,build_transformer]
 df_params['Architectures']=archs
 tickers=['AAPL','AMZN','GOOG','GOOGL','MSFT','TSLA']
-Folders=['LSTM','GRU','TCN']
-main_dir='/home/j/usfq/tesis/StockPredictionModels - Copy/Models'
+Folders=['LSTM','GRU','TCN','TRANSFORMER']
+main_dir='/home/j/usfq/Proyecto-Integrador/StockPredictionModels/Models'
 for ticker in tickers:
     parms_per_tick=[]
     for i in range(len(archs)):
@@ -200,6 +234,6 @@ for ticker in tickers:
         del parm
     df_params[ticker]=parms_per_tick
 
-df_params.to_csv('/home/j/usfq/tesis/StockPredictionModels - Copy/'+'Results/params.csv',index=False)
+df_params.to_csv('/home/j/usfq/Proyecto-Integrador/StockPredictionModels/'+'Results/params.csv',index=False)
 
 
