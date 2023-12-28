@@ -83,7 +83,7 @@ early_stop=EarlyStopping(monitor='val_loss',patience=10)
 def build_bigru(hp):
     hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
     model=Sequential()
-    model.add(Bidirectional(GRU(hp_units,activation='relu',input_shape=(7,17),return_sequences=False)))
+    model.add(Bidirectional(GRU(hp_units,input_shape=(7,17),return_sequences=False)))
     model.add(Dense(1))
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
 
@@ -92,7 +92,7 @@ def build_bigru(hp):
 def build_bilstm(hp):
     hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
     model=Sequential()
-    model.add(Bidirectional(LSTM(hp_units,activation='relu',input_shape=(7,17),return_sequences=False)))
+    model.add(Bidirectional(LSTM(hp_units,input_shape=(7,17),return_sequences=False)))
     model.add(Dense(1))
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
 
@@ -125,7 +125,7 @@ def build_bitcn(hp):
 def build_gru(hp):
     hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
     model=Sequential()
-    model.add(GRU(hp_units,activation='relu',input_shape=(7,17),return_sequences=False))
+    model.add(GRU(hp_units,input_shape=(7,17),return_sequences=False))
     model.add(Dense(1))
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
 
@@ -134,7 +134,7 @@ def build_gru(hp):
 def build_lstm(hp):
     hp_units=hp.Int('units',min_value=2,max_value=240,step=2)
     model=Sequential()
-    model.add(LSTM(hp_units,activation='relu',input_shape=(7,17),return_sequences=False))
+    model.add(LSTM(hp_units,input_shape=(7,17),return_sequences=False))
     model.add(Dense(1))
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=1e-4),loss='mse')
     return model
@@ -211,7 +211,7 @@ for ticker in tickers:
         print(dir)
         print(tuning)
         tuner = kt.GridSearch(builds[i],
-                objective='val_loss',
+                objective='loss',
                 directory=dir,
                 project_name=tuning,
                 ) 
@@ -222,9 +222,9 @@ for ticker in tickers:
         model=tuner.hypermodel.build(best_hps)
         model.fit(X,y,epochs=1,callbacks=[early_stop],verbose=0)
 
-        print(archs[i])
-        print(ticker)
-        print(model.summary())
+        #print(archs[i])
+        #print(ticker)
+        #print(best_hps.values)
         parm=model.count_params()
         parms_per_tick.append(parm)
         del tuner
@@ -234,6 +234,6 @@ for ticker in tickers:
         del parm
     df_params[ticker]=parms_per_tick
 
-df_params.to_csv('/home/j/usfq/Proyecto-Integrador/StockPredictionModels/'+'Results/params.csv',index=False)
+df_params.to_csv('/home/j/usfq/Proyecto-Integrador/StockPredictionModels/'+'Results/metrics/params.csv',index=False)
 
 

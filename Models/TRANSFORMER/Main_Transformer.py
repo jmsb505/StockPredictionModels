@@ -31,7 +31,9 @@ df
 #df['Date'] = pd.to_datetime(df['Date'])
 #df['Date'] = df['Date'].apply(lambda x: x.timestamp())
 #df
-
+tf.keras.utils.set_random_seed(
+    42
+)
 # %%
 #generate new dataframes for each ticker_symbol]
 metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','testing-mape','validation-mape','testing-RMSE','validation-RMSE', 'testing-MPE','validation-MPE']
@@ -170,6 +172,7 @@ for ticker_symbol in keys_list:
 
     # %%
     best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
+    
     
     # %%
     def mape(y_true, y_pred):
