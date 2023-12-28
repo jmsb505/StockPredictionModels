@@ -20,7 +20,7 @@ from tcn import TCN
 # %% [markdown]
 # 
 arch='bitcn'
-project_path='/home/j/usfq/tesis/StockPredictionModels - Copy'
+project_path='/home/j/usfq/Proyecto-Integrador/StockPredictionModels'
 # %%
 df=pd.read_csv(project_path+'/Data/Complete.csv')
 df
@@ -30,7 +30,9 @@ df
 #df['Date'] = pd.to_datetime(df['Date'])
 #df['Date'] = df['Date'].apply(lambda x: x.timestamp())
 #df
-
+tf.keras.utils.set_random_seed(
+    42
+)
 # %%
 #generate new dataframes for each ticker_symbol]
 metric_labels=['Testing-MSE','Validation-MSE','testing-MAE','validation-MAE','testing-mape','validation-mape','testing-RMSE','validation-RMSE', 'testing-MPE','validation-MPE']
@@ -39,8 +41,8 @@ metrics_df['Metrics']=metric_labels
 std_metrics_df=pd.DataFrame()
 std_metrics_df['Metrics']=metric_labels
 #save dataframe as csv
-metrics_df.to_csv(project_path+f'/Results/{arch}_metrics.csv',index=False)
-std_metrics_df.to_csv(project_path+f'/Results/{arch}_std_metrics.csv',index=False)
+metrics_df.to_csv(project_path+f'/Results/metrics/{arch}_metrics.csv',index=False)
+std_metrics_df.to_csv(project_path+f'/Results/metrics/{arch}_std_metrics.csv',index=False)
 metrics=[]
 df_dict={}
 for key in df['ticker_symbol'].unique():
@@ -354,7 +356,7 @@ for ticker_symbol in keys_list:
     metrics_df[ticker_symbol]=metrics
     metrics=[]
     #save dataframe as csv
-    metrics_df.to_csv(project_path+f'/Results/{arch}_metrics.csv',index=False)
+    metrics_df.to_csv(project_path+f'/Results/metrics/{arch}_metrics.csv',index=False)
     print(f'{ticker} done')
 
     Tstd_mse=np.std(t_mses)
@@ -369,7 +371,7 @@ for ticker_symbol in keys_list:
     Vstd_mpe=np.std(v_mpes)
     std_metrics=[Tstd_mse,Tstd_mae,Tstd_mape,Tstd_rmse,Vstd_mse,Vstd_mae,Vstd_mape,Vstd_rmse,Tstd_mpe,Vstd_mpe]
     std_metrics_df[ticker_symbol]=std_metrics
-    std_metrics_df.to_csv(project_path+f'/Results/{arch}_std_metrics.csv',index=False)
+    std_metrics_df.to_csv(project_path+f'/Results/metrics/{arch}_std_metrics.csv',index=False)
 
 
 
@@ -380,14 +382,14 @@ df_ps['MAE']=mae_t_p
 df_ps['MAPE']=mape_t_p
 df_ps['RMSE']=rmse_t_p
 df_ps['MPE']=mpe_t_p
-df_ps.to_csv(project_path+f'/Results/{arch}_hypothesis.csv',index=False)
+df_ps.to_csv(project_path+f'/Results/metrics/{arch}_hypothesis.csv',index=False)
 
 df_loss=pd.DataFrame()
 df_loss['Training Loss']=overall_mse_train
 df_loss['Training Std']=overall_std_train
 df_loss['Validation Loss']=overall_mse_val
 df_loss['Validation Std']=overall_std_val
-df_loss.to_csv(project_path+f'/Results/{arch}_loss.csv',index=False)
+df_loss.to_csv(project_path+f'/Results/metrics/{arch}_loss.csv',index=False)
 
 
 
