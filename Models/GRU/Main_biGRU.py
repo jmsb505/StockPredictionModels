@@ -279,7 +279,8 @@ for ticker_symbol in keys_list:
         plt.legend()
         plt.savefig(os.path.join(dir,Fold,'real_vs_pred.png'))
         plt.close()
-
+        if counter_fold==11:
+            model.save_weights(f'/home/j/usfq/Proyecto-Integrador/StockPredictionModels/Models/GRU/Weights/model_{arch}_{ticker}.h5')
         print(f'{Fold} Done')
 
     max_train_epochs = max(len(losses) for losses in train_losses)
