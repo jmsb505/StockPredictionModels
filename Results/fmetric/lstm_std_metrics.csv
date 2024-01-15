@@ -1,0 +1,11 @@
+Metrics,AAPL,AMZN,GOOG,GOOGL,MSFT,TSLA
+Testing-MSE,0.0,0.0,0.0,0.0,0.0,0.0
+Validation-MSE,0.0,0.0,0.0,0.0,0.0,0.0
+testing-MAE,0.0,0.0,0.0,0.0,0.0,0.0
+validation-MAE,0.0,0.0,0.0,0.0,0.0,0.0
+testing-mape,0.0,0.0,0.0,0.0,0.0,0.0
+validation-mape,0.0,0.0,0.0,0.0,0.0,0.0
+testing-RMSE,0.0,0.0,0.0,0.0,0.0,0.0
+validation-RMSE,0.0,0.0,0.0,0.0,0.0,0.0
+testing-MPE,0.0,0.0,0.0,0.0,0.0,0.0
+validation-MPE,0.0,0.0,0.0,0.0,0.0,0.0
